@@ -1,0 +1,70 @@
+name: Bug report
+description: Something in matins (template, observe script, synth, docs) is broken or wrong.
+title: "[bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing. Please include enough detail that we can reproduce.
+        For security issues, do not file here — email security@mindweave.tech.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of matins?
+      options:
+        - templates/MATINS.md
+        - templates/observe/*.sh
+        - templates/observe/synth.sh
+        - docs/PROTOCOL.md
+        - docs/DOMAINS.md
+        - docs/ANALYTICS.md
+        - docs/ARCHITECTURE.md
+        - SECURITY.md
+        - README
+        - Other (specify below)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Matins version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Agent runtime
+      placeholder: "Claude Code 1.2.3 / Cursor / generic"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: How to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: matins_md
+    attributes:
+      label: Relevant excerpt from your MATINS.md (anonymized)
+      render: markdown
+    validations:
+      required: false

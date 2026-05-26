@@ -1,0 +1,43 @@
+name: Feature request
+description: Suggest an addition or change to matins.
+title: "[feat] "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, please check [CONTRIBUTING.md](../CONTRIBUTING.md) for
+        what is in/out of scope for matins.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: What's the user-visible pain today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Scope of change
+      options:
+        - "Template only (templates/*)"
+        - "Observe script (templates/observe/*)"
+        - "Domain profile (docs/DOMAINS.md)"
+        - "Protocol change (docs/PROTOCOL.md) — breaking"
+        - "Protocol change (docs/PROTOCOL.md) — backwards-compatible"
+        - "New documentation"
+        - "Other"
+    validations:
+      required: true

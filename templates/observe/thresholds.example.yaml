@@ -1,0 +1,81 @@
+# .continuity/thresholds.yaml — example
+# Copy this to .continuity/thresholds.yaml and tune for your project.
+#
+# Each signal defines green/yellow/red bands. synth.sh reads these and emits
+# task suggestions for any signal in the red band (or trending toward red).
+#
+# Bands can be:
+#   - explicit numeric: "<0.5%" / "0.5%-1%" / ">1%"
+#   - baseline-relative: baseline: <n> / red_if_below_pct: <pct>
+#   - auto-baselined:   baseline: auto  / red_if_drop_pct: <pct>
+
+signals:
+  # --- Reliability ---
+  sentry_error_rate_24h:
+    green: "<0.5%"
+    yellow: "0.5%-1%"
+    red: ">1%"
+
+  uptime_synthetic_5m:
+    green: "100%"
+    yellow: "99%-100%"
+    red: "<99%"
+
+  # --- Cost ---
+  vercel_runtime_gbhrs_24h:
+    green: "<5"
+    yellow: "5-20"
+    red: ">20"        # cron / route audit territory
+
+  llm_tokens_24h_usd:
+    green: "<5"
+    yellow: "5-20"
+    red: ">20"
+
+  # --- Acquisition / traffic ---
+  ga4_signups_24h:
+    baseline: auto    # auto-tracked 30-day rolling median
+    red_if_below_pct: 33     # >67% drop from baseline
+
+  gsc_top10_ctr_28d:
+    baseline: auto
+    red_if_drop_pct: 20      # >20% CTR drop
+
+  # --- Mobile (if applicable) ---
+  play_crash_rate_7d:
+    green: "<0.5%"
+    yellow: "0.5%-1%"
+    red: ">1%"
+
+  app_store_rating_1_2_star_24h:
+    green: "0"
+    yellow: "1"
+    red: ">=2"
+
+  # --- Revenue (if applicable) ---
+  stripe_failed_charges_pct_24h:
+    green: "<2%"
+    yellow: "2%-5%"
+    red: ">5%"
+
+  stripe_mrr_change_7d_pct:
+    baseline: 0
+    red_if_below_pct: -5     # MRR down >5% week-over-week
+
+  # --- Communications (if applicable) ---
+  twilio_otp_delivery_pct_24h:
+    green: ">95%"
+    yellow: "90%-95%"
+    red: "<90%"
+
+  resend_bounce_rate_24h:
+    green: "<1%"
+    yellow: "1%-2%"
+    red: ">2%"
+
+# --- Synth configuration ---
+synth:
+  sla_red_band_hours: 24      # red-band auto-tasks have a 24h deadline by default
+  dedup_window_hours: 4       # don't create a duplicate auto-task within this window
+  notify_on_red: true         # ping the operator when any signal enters red
+  notify_on_yellow: false

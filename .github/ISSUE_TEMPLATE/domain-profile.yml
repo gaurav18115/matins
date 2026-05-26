@@ -1,0 +1,59 @@
+name: New domain profile
+description: Add a starter-task catalog for a project type matins doesn't cover.
+title: "[domain] "
+labels: ["domain-profile", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Domain profiles seed `## Active Tasks` on first bootstrap. A good profile is
+        **observable** (signals can be checked without asking the operator) and
+        **actionable** (starter tasks are concrete, not "improve the codebase").
+        See existing profiles: docs/DOMAINS.md
+  - type: input
+    id: name
+    attributes:
+      label: Profile name
+      placeholder: "e.g. Embedded firmware, Scientific compute, Discord bot"
+    validations:
+      required: true
+  - type: textarea
+    id: signals
+    attributes:
+      label: How does the agent recognize this kind of project?
+      description: What's visible in package.json / requirements.txt / Dockerfile / repo layout?
+    validations:
+      required: true
+  - type: textarea
+    id: starter_tasks
+    attributes:
+      label: Starter tasks (4-8, concrete and verifiable)
+      placeholder: |
+        - Verify ...
+        - Audit ...
+        - Run ...
+    validations:
+      required: true
+  - type: textarea
+    id: observe_scripts
+    attributes:
+      label: Primary observe scripts (existing or new)
+      description: Which signals matter for this profile? Note any that need a new observe script.
+    validations:
+      required: true
+  - type: textarea
+    id: triggers
+    attributes:
+      label: Red-band auto-task triggers (3-5)
+      placeholder: |
+        - Signal X > threshold → action
+        - Signal Y drops by N% → action
+    validations:
+      required: true
+  - type: textarea
+    id: real_use
+    attributes:
+      label: Have you used this profile on a real project?
+      description: If yes, link to an anonymized MATINS.md if possible.
+    validations:
+      required: false

@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# This workflow uses no untrusted user input — all steps are static bash that
+# reads files in the checked-out repo. No github.event.* values are interpolated
+# into run: commands.
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate templates and examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install validation dependencies
+        run: pip install pyyaml shellcheck-py
+
+      - name: Shellcheck observe scripts
+        run: |
+          for f in templates/observe/*.sh; do
+            echo "::group::shellcheck $f"
+            shellcheck -x "$f" || echo "::warning::$f has shellcheck warnings"
+            echo "::endgroup::"
+          done
+
+      - name: Validate YAML — thresholds example
+        run: python -c "import yaml; yaml.safe_load(open('templates/observe/thresholds.example.yaml'))"
+
+      - name: Validate MATINS.md structural sections
+        run: |
+          required_sections=("## Identity" "## This Week" "## Active Tasks" "## Backlog" "## Blockers" "## Decisions Log" "## Decisions & Constraints" "## Skills & Connectors" "## Last Run" "## Lessons" "## Retro Log" "## History")
+          for md in templates/MATINS.md examples/*/MATINS.md; do
+            echo "Checking $md..."
+            for section in "${required_sections[@]}"; do
+              if ! grep -qF "$section" "$md"; then
+                echo "::error file=$md::missing section '$section'"
+                exit 1
+              fi
+            done
+            echo "  ok"
+          done
+
+      - name: Link-check internal references
+        run: |
+          fail=0
+          while IFS= read -r line; do
+            file=$(echo "$line" | cut -d: -f1)
+            target=$(echo "$line" | grep -oE '\(([^)]*\.md[^)]*)\)' | sed -E 's/^\(|\)$//g' | head -1)
+            case "$target" in
+              ""|http*|"#"*|*"gaurav18115"*) continue ;;
+            esac
+            path="${target%#*}"
+            dir=$(dirname "$file")
+            if [ ! -f "$dir/$path" ] && [ ! -f "$path" ]; then
+              echo "::error file=$file::broken link to $target"
+              fail=1
+            fi
+          done < <(grep -rEn '\[[^]]+\]\([^)]+\.md[^)]*\)' --include='*.md' .)
+          exit $fail

@@ -1,0 +1,62 @@
+name: Field report
+description: You ran matins on a real project. Tell us what happened.
+title: "[field] "
+labels: ["field-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Field reports are the most valuable signal for pre-1.0. Even short ones help.
+        Anonymize anything sensitive — we don't need real metric values.
+  - type: input
+    id: project_type
+    attributes:
+      label: What kind of project did you run it on?
+      placeholder: "e.g. SaaS dashboard, mobile app, marketing site"
+    validations:
+      required: true
+  - type: input
+    id: duration
+    attributes:
+      label: How long did you run it?
+      placeholder: "e.g. 3 days / 2 weeks / 1 month"
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Agent runtime
+      placeholder: "Claude Code / Cursor / generic"
+    validations:
+      required: true
+  - type: textarea
+    id: worked
+    attributes:
+      label: What worked
+    validations:
+      required: true
+  - type: textarea
+    id: didnt
+    attributes:
+      label: What didn't work
+    validations:
+      required: true
+  - type: textarea
+    id: kept_getting_wrong
+    attributes:
+      label: What did the agent keep getting wrong?
+      description: Repeated mistakes signal a framework gap.
+    validations:
+      required: false
+  - type: textarea
+    id: signals_used
+    attributes:
+      label: Which observe scripts / signals did you use?
+    validations:
+      required: false
+  - type: textarea
+    id: would_change
+    attributes:
+      label: What would you change about the framework?
+    validations:
+      required: false

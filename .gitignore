@@ -1,0 +1,9 @@
+# Telemetry — not committed
+.continuity/observations.jsonl
+
+# OS / editor noise
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
