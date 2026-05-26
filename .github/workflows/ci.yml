@@ -55,18 +55,25 @@ jobs:
 
       - name: Link-check internal references
         run: |
-          fail=0
-          while IFS= read -r line; do
-            file=$(echo "$line" | cut -d: -f1)
-            target=$(echo "$line" | grep -oE '\(([^)]*\.md[^)]*)\)' | sed -E 's/^\(|\)$//g' | head -1)
-            case "$target" in
-              ""|http*|"#"*|*"gaurav18115"*) continue ;;
-            esac
-            path="${target%#*}"
-            dir=$(dirname "$file")
-            if [ ! -f "$dir/$path" ] && [ ! -f "$path" ]; then
-              echo "::error file=$file::broken link to $target"
-              fail=1
-            fi
-          done < <(grep -rEn '\[[^]]+\]\([^)]+\.md[^)]*\)' --include='*.md' .)
-          exit $fail
+          python - <<'PY'
+          import os, re, sys
+          broken = []
+          for root, _, files in os.walk("."):
+              if "/.git/" in root: continue
+              for f in files:
+                  if not f.endswith(".md"): continue
+                  path = os.path.join(root, f)
+                  with open(path) as fh:
+                      content = fh.read()
+                  for m in re.finditer(r'\[[^\]]+\]\(([^)]+\.md(?:#[^)]*)?)\)', content):
+                      target = m.group(1).split("#")[0]
+                      if target.startswith(("http://", "https://", "#")): continue
+                      if "gaurav18115" in target: continue
+                      resolved = os.path.normpath(os.path.join(os.path.dirname(path), target))
+                      if not os.path.isfile(resolved):
+                          broken.append(f"::error file={path}::broken link to {target}")
+          if broken:
+              for b in broken: print(b)
+              sys.exit(1)
+          print("all internal .md links resolve")
+          PY
