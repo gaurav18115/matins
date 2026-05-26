@@ -4,11 +4,13 @@ What `MATINS.md` looks like in real projects, at different stages.
 
 ## Available examples
 
-- **[mature-saas/](mature-saas/MATINS.md)** — RouteAtlas, a B2B SaaS after ~30 days of cycles. Bootstrap block long gone. Real-feeling but fictitious — names, metrics, and ADR numbers are illustrative.
+- **[mature-saas/](mature-saas/MATINS.md)** — RouteAtlas, a B2B SaaS after ~30 days of cycles. Shows auto-synth red-band tasks, ADR chain, weekly retros tied to moved metrics.
+- **[mature-mobile/](mature-mobile/MATINS.md)** — TideMap, a React Native / Expo mobile app after ~30 days. Shows a real-feeling cache-bug bisect driven by auto-synth on Play Store 1-2★ reviews, plus the always-100%-rollout policy.
+
+Both examples are real-feeling but fictitious — names, metrics, and ADR numbers are illustrative.
 
 ## Planned examples (PRs welcome — see [CONTRIBUTING.md](../CONTRIBUTING.md))
 
-- `mature-mobile/` — a React Native / Expo app after ~30 days
 - `mature-landing/` — a marketing site after ~30 days
 - `day-zero/` — what `MATINS.md` looks like the day you drop the template in, before the first `/loop` tick
 - `post-incident/` — `MATINS.md` after a major production incident, showing the ADR + lesson + retro chain

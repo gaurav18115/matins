@@ -55,23 +55,26 @@ Full spec → [docs/ANALYTICS.md](docs/ANALYTICS.md).
 ## Quickstart
 
 ```bash
-# 1. Drop the template into your repo root
-curl -fsSL https://raw.githubusercontent.com/gaurav18115/matins/main/templates/MATINS.md > MATINS.md
+# 1. Install the CLI (one-time)
+curl -fsSL https://raw.githubusercontent.com/gaurav18115/matins/main/bin/matins \
+  -o /usr/local/bin/matins && chmod +x /usr/local/bin/matins
 
-# 2. Pull observe-script templates
-mkdir -p .continuity/observe
-curl -fsSL https://raw.githubusercontent.com/gaurav18115/matins/main/templates/observe/{sentry,ga4,gsc,vercel,supabase,stripe,synth}.sh \
-  -o .continuity/observe/#1.sh
-chmod +x .continuity/observe/*.sh
-echo ".continuity/observations.jsonl" >> .gitignore
+# 2. In any project directory:
+matins init                  # drops MATINS.md + .continuity/ skeleton + gitignore rule
+matins lint                  # confirm the file is well-formed
 
-# 3. In Claude Code, type:
+# 3. In Claude Code (or your favorite agent runtime — see docs/ADAPTERS.md), type:
 /loop run matins
 ```
 
 The first cycle reads `MATINS.md`, classifies your project against a [Domain Profile](docs/DOMAINS.md), seeds `## Active Tasks` from your current state + initial signal pull, and starts working.
 
-> An npm/pip init CLI (`npx matins init`) is on the v1.0 roadmap — see [CHANGELOG.md](CHANGELOG.md).
+> Don't want to install? Run one-off:
+> ```bash
+> bash <(curl -fsSL https://raw.githubusercontent.com/gaurav18115/matins/main/bin/matins) init
+> ```
+
+> `npx matins init` (proper Node package) is on the v1.0 roadmap. The current shell CLI ships with v0.2.0.
 
 ## How matins differs from other agent-state projects
 
@@ -102,10 +105,11 @@ The first cycle reads `MATINS.md`, classifies your project against a [Domain Pro
 **Pre-1.0.** Battle-tested in private on 6 production projects (B2B SaaS, two marketing sites, mobile app, ERP, AI agent system). Going public for community feedback before a v1.0 freeze.
 
 Known gaps before v1.0:
-- [ ] `npx matins init` scaffolder CLI
-- [ ] `matins lint MATINS.md` validator (JSON Schema + Markdown structure)
-- [ ] Filled-in mature examples in `examples/` (only 1 today)
-- [ ] Adapters for agent runtimes other than Claude Code (Cursor, Codex, generic LLM tool loop)
+- [x] **Shell-based init + lint CLI** — shipped in v0.2.0 (`bin/matins`).
+- [ ] **`npx matins init` proper Node package** — published to npm (shell script works today, Node package for richer DX).
+- [ ] **JSON Schema** for stricter `matins lint` (today's lint covers structure + Active Tasks fields).
+- [x] **Filled-in mature examples** — `examples/mature-saas/` and `examples/mature-mobile/` shipped.
+- [x] **Adapter spec for other runtimes** — see [docs/ADAPTERS.md](docs/ADAPTERS.md) (Cursor, Aider, Codex, Continue, custom LLM loops).
 
 See [CHANGELOG.md](CHANGELOG.md) and the [v1.0 milestone](https://github.com/gaurav18115/matins/milestone/1).
 

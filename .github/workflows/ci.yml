@@ -28,13 +28,25 @@ jobs:
       - name: Install validation dependencies
         run: pip install pyyaml shellcheck-py
 
-      - name: Shellcheck observe scripts
+      - name: Shellcheck observe scripts + bin/matins
         run: |
-          for f in templates/observe/*.sh; do
+          for f in templates/observe/*.sh bin/matins; do
             echo "::group::shellcheck $f"
             shellcheck -x "$f" || echo "::warning::$f has shellcheck warnings"
             echo "::endgroup::"
           done
+
+      - name: Smoke-test CLI
+        run: |
+          bash bin/matins version
+          bash bin/matins help | head -1
+          for ex in examples/*/MATINS.md; do
+            echo "::group::matins lint $ex"
+            bash bin/matins lint "$ex"
+            echo "::endgroup::"
+          done
+          bash bin/matins lint MATINS.md
+          bash bin/matins lint templates/MATINS.md
 
       - name: Validate YAML — thresholds example
         run: python -c "import yaml; yaml.safe_load(open('templates/observe/thresholds.example.yaml'))"

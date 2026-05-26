@@ -1,0 +1,224 @@
+#!/usr/bin/env bash
+# matins — CLI for the matins continuity framework
+#
+# Commands:
+#   matins init [--force]   Drop MATINS.md + .continuity/ skeleton into cwd
+#   matins lint [PATH]      Validate a MATINS.md file (default: ./MATINS.md)
+#   matins version          Print the framework version this script is from
+#   matins help             Show this help
+#
+# Install:
+#   curl -fsSL https://raw.githubusercontent.com/gaurav18115/matins/main/bin/matins -o /usr/local/bin/matins
+#   chmod +x /usr/local/bin/matins
+#
+# Or run without installing:
+#   bash <(curl -fsSL https://raw.githubusercontent.com/gaurav18115/matins/main/bin/matins) init
+#
+# Spec: https://github.com/gaurav18115/matins
+# License: MIT
+
+set -euo pipefail
+
+MATINS_VERSION="0.2.0"
+MATINS_REPO_RAW="https://raw.githubusercontent.com/gaurav18115/matins/main"
+REQUIRED_SECTIONS=(
+  "## Identity"
+  "## This Week"
+  "## Active Tasks"
+  "## Backlog"
+  "## Blockers"
+  "## Decisions Log"
+  "## Decisions & Constraints"
+  "## Skills & Connectors"
+  "## Last Run"
+  "## Lessons"
+  "## Retro Log"
+  "## History"
+)
+
+usage() {
+  cat <<'EOF'
+matins — A continuity framework for your agent.
+
+Usage:
+  matins init [--force]   Drop MATINS.md + .continuity/ skeleton into cwd
+  matins lint [PATH]      Validate a MATINS.md file (default: ./MATINS.md)
+  matins version          Print the framework version
+  matins help             Show this help
+
+Examples:
+  matins init                            # Set up matins in this directory
+  matins init --force                    # Overwrite existing MATINS.md
+  matins lint                            # Validate ./MATINS.md
+  matins lint examples/mature-saas/MATINS.md
+
+Spec: https://github.com/gaurav18115/matins
+EOF
+}
+
+log()   { printf '\033[36m[matins]\033[0m %s\n' "$*"; }
+warn()  { printf '\033[33m[matins]\033[0m %s\n' "$*" >&2; }
+err()   { printf '\033[31m[matins]\033[0m %s\n' "$*" >&2; }
+ok()    { printf '\033[32m[matins]\033[0m %s\n' "$*"; }
+
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || { err "missing required command: $1"; exit 1; }
+}
+
+cmd_version() {
+  echo "matins v$MATINS_VERSION"
+}
+
+cmd_init() {
+  local force=0
+  [ "${1:-}" = "--force" ] && force=1
+
+  require_cmd curl
+
+  # Confirm MATINS.md doesn't exist (unless --force)
+  if [ -f "MATINS.md" ] && [ $force -eq 0 ]; then
+    err "MATINS.md already exists in this directory. Pass --force to overwrite."
+    exit 1
+  fi
+
+  log "Downloading templates from $MATINS_REPO_RAW ..."
+
+  # 1. Drop MATINS.md template into repo root
+  curl -fsSL "$MATINS_REPO_RAW/templates/MATINS.md" -o MATINS.md
+  ok "Wrote MATINS.md"
+
+  # 2. Create .continuity/ skeleton
+  mkdir -p .continuity/observe
+  for script in sentry ga4 gsc vercel supabase stripe synth; do
+    if [ ! -f ".continuity/observe/${script}.sh" ] || [ $force -eq 1 ]; then
+      curl -fsSL "$MATINS_REPO_RAW/templates/observe/${script}.sh" -o ".continuity/observe/${script}.sh"
+    fi
+  done
+  chmod +x .continuity/observe/*.sh
+
+  if [ ! -f ".continuity/thresholds.yaml" ] || [ $force -eq 1 ]; then
+    curl -fsSL "$MATINS_REPO_RAW/templates/observe/thresholds.example.yaml" \
+      -o .continuity/thresholds.yaml
+  fi
+
+  if [ ! -f ".continuity/observe/README.md" ] || [ $force -eq 1 ]; then
+    curl -fsSL "$MATINS_REPO_RAW/templates/observe/README.md" \
+      -o .continuity/observe/README.md
+  fi
+
+  ok "Wrote .continuity/ skeleton (7 observe scripts, thresholds.yaml, README)"
+
+  # 3. Gitignore observations.jsonl
+  if [ -d .git ] || [ -f .gitignore ]; then
+    if [ ! -f .gitignore ] || ! grep -q "observations.jsonl" .gitignore 2>/dev/null; then
+      echo ".continuity/observations.jsonl" >> .gitignore
+      ok "Added .continuity/observations.jsonl to .gitignore"
+    fi
+  else
+    warn "No .git or .gitignore found — remember to ignore .continuity/observations.jsonl"
+  fi
+
+  cat <<EOF
+
+🌅 matins initialized.
+
+Next steps:
+  1. Edit MATINS.md → fill in ## Identity (project name, URL, repo, stack, mission)
+  2. Edit .continuity/thresholds.yaml → tune red/yellow/green bands for your project
+  3. Edit .continuity/observe/*.sh → comment out signals you don't use, set env vars
+  4. In Claude Code (or your agent runtime), run:
+
+     /loop run matins
+
+  Or invoke a one-off cycle:
+
+     matins lint   # verify your MATINS.md is well-formed
+
+Docs: https://github.com/gaurav18115/matins
+EOF
+}
+
+cmd_lint() {
+  local target="${1:-MATINS.md}"
+
+  if [ ! -f "$target" ]; then
+    err "file not found: $target"
+    exit 1
+  fi
+
+  log "Linting $target ..."
+
+  local fail=0
+  local missing=()
+
+  for section in "${REQUIRED_SECTIONS[@]}"; do
+    if ! grep -qF "$section" "$target"; then
+      missing+=("$section")
+    fi
+  done
+
+  if [ ${#missing[@]} -gt 0 ]; then
+    err "missing required sections:"
+    for s in "${missing[@]}"; do
+      err "  - $s"
+    done
+    fail=1
+  fi
+
+  # Check task blocks under ## Active Tasks have required fields
+  # (Backlog uses a lighter schema: Task / Venture / Owner / Priority / Notes — not validated here)
+  python3 - "$target" <<'PY' || fail=1
+import sys, re
+text = open(sys.argv[1]).read()
+
+# Extract the ## Active Tasks section (until the next ## heading or EOF)
+m = re.search(r'(?ms)^## Active Tasks\s*\n(.*?)(?=^## |\Z)', text)
+if not m:
+    sys.exit(0)  # missing section is caught elsewhere
+section = m.group(1)
+
+# Find task blocks within Active Tasks only
+task_blocks = re.findall(
+    r'(- \*\*Task:\*\*.*?)(?=\n\n- \*\*Task:\*\*|\n\n|\Z)',
+    section,
+    re.DOTALL,
+)
+
+required_fields = ["Task", "Venture", "Owner", "Deadline", "Status", "Tracker",
+                   "Last Verified", "Next Check", "Success Criteria", "Outcome"]
+errors = 0
+for i, block in enumerate(task_blocks, 1):
+    # Skip the empty template block (all fields blank besides the Task line itself)
+    nonblank = sum(1 for line in block.splitlines() if line.strip() and ":**" in line and line.split(":**", 1)[1].strip())
+    if nonblank <= 1:
+        continue
+    missing = [f for f in required_fields if f"**{f}:**" not in block]
+    if missing:
+        first = block.split("\n", 1)[0][:80]
+        print(f"  Active Tasks block #{i}: {first}", file=sys.stderr)
+        for f in missing:
+            print(f"    - missing field: {f}", file=sys.stderr)
+        errors += 1
+sys.exit(1 if errors > 0 else 0)
+PY
+
+  if [ $fail -eq 0 ]; then
+    ok "$target is valid (12 required sections present, task blocks well-formed)"
+  else
+    err "$target has lint errors (see above)"
+    exit 1
+  fi
+}
+
+# --- main ---
+case "${1:-help}" in
+  init)    shift; cmd_init "$@" ;;
+  lint)    shift; cmd_lint "$@" ;;
+  version|--version|-v) cmd_version ;;
+  help|--help|-h|"") usage ;;
+  *)
+    err "unknown command: $1"
+    usage
+    exit 1
+    ;;
+esac

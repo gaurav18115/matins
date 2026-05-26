@@ -5,11 +5,20 @@ All notable changes to Matins are documented here. Format follows [Keep a Change
 ## [Unreleased]
 
 ### Planned for v1.0
-- `npx matins init` scaffolder CLI — drops `MATINS.md` + `.continuity/` skeleton into any repo
-- `matins lint MATINS.md` validator — JSON Schema + structural checks
-- Adapters for agent runtimes beyond Claude Code (Cursor, generic LLM tool loop)
-- 3+ filled-in mature examples in `examples/`
-- Docs site (Vitepress or similar)
+- **`npx matins init` proper Node package** — published to npm with richer DX (interactive prompts, project-type detection).
+- **JSON Schema** for stricter `matins lint` validation.
+- **Docs site** (Vitepress or similar) — README + docs/ work for now, but a hosted docs site helps discoverability.
+
+## [0.2.0] — 2026-05-26
+
+### Added
+- **`bin/matins` shell CLI** with `init` + `lint` + `version` + `help` subcommands. Install via `curl | sh` or run one-off via `bash <(curl ...)`. No Node/Python install required for users.
+- **`examples/mature-mobile/MATINS.md`** — filled-in React Native / Expo example showing ~30 days of cycles, including a real-feeling cache-bug bisect driven by an auto-synth red-band on Play Store 1-2★ reviews.
+- **`docs/ADAPTERS.md`** — how matins maps onto Claude Code (reference), Cursor, Aider, Codex / OpenAI Assistants, Continue.dev, and custom LLM tool loops.
+
+### Changed
+- README quickstart now uses `matins init` instead of manual `curl` of every file.
+- CI workflow's link-checker rewritten from fragile bash to Python (the bash regex was capturing surrounding text on lines with multiple `(...)` groups).
 
 ## [0.1.0] — 2026-05-26
 
